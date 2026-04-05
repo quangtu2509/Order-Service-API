@@ -69,11 +69,18 @@ router.post("/", async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // STEP 3: simulate payment
-    const paymentSuccess = Math.random() > 0.5;
+    // STEP 3: CALL PAYMENT SERVICE (REAL)
 
-    if (!paymentSuccess) {
-      // ROLLBACK PRODUCT (release stock)
+    try {
+      await axios.post("http://localhost:8003/api/payments/pay", {
+        orderId: savedOrder._id,
+        userId: userId,
+        amount: totalAmount,
+      });
+    } catch (paymentError) {
+      console.log("Payment failed → rollback stock");
+
+      // 🔥 ROLLBACK STOCK
       for (let item of items) {
         try {
           await axios.put(
@@ -83,13 +90,16 @@ router.post("/", async (req, res) => {
             },
           );
         } catch (err) {
-          console.error("Rollback failed:", err.message);
+          console.error("Rollback stock failed:", err.message);
         }
       }
 
-      // UPDATE ORDER
+      // 🔥 UPDATE ORDER
       savedOrder.status = "CANCELLED";
-      savedOrder.history.push({ status: "CANCELLED" });
+      savedOrder.history.push({
+        status: "CANCELLED",
+        reason: "Payment failed",
+      });
 
       await savedOrder.save();
 
@@ -99,7 +109,6 @@ router.post("/", async (req, res) => {
         data: savedOrder,
       });
     }
-
     // SUCCESS
     savedOrder.status = "CONFIRMED";
     savedOrder.history.push({ status: "CONFIRMED" });
