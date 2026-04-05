@@ -2,6 +2,14 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const axios = require("axios");
+
+// 🔥 Khai báo URL lấy từ biến môi trường (Environment Variables)
+// Nếu chạy ở máy ảo (Render) nó sẽ lấy link trên mạng, nếu chạy ở máy tính bạn nó sẽ lấy localhost
+const PRODUCT_SERVICE_URL =
+  process.env.PRODUCT_SERVICE_URL || "http://localhost:8001";
+const PAYMENT_SERVICE_URL =
+  process.env.PAYMENT_SERVICE_URL || "http://localhost:8003";
+
 // 1. POST /api/orders
 router.post("/", async (req, res) => {
   try {
@@ -18,8 +26,9 @@ router.post("/", async (req, res) => {
 
     // STEP 1: check product
     for (let item of items) {
+      // 🔴 Sửa localhost thành PRODUCT_SERVICE_URL
       const response = await axios.get(
-        `http://localhost:8001/api/products/${item.productId}`,
+        `${PRODUCT_SERVICE_URL}/api/products/${item.productId}`,
       );
 
       const product = response.data.data;
@@ -44,8 +53,9 @@ router.post("/", async (req, res) => {
 
     for (let item of items) {
       try {
+        // 🔴 Sửa localhost thành PRODUCT_SERVICE_URL
         await axios.put(
-          `http://localhost:8001/api/products/${item.productId}/reduce-stock`,
+          `${PRODUCT_SERVICE_URL}/api/products/${item.productId}/reduce-stock`,
           {
             quantity: item.quantity,
           },
@@ -70,9 +80,9 @@ router.post("/", async (req, res) => {
     const savedOrder = await newOrder.save();
 
     // STEP 3: CALL PAYMENT SERVICE (REAL)
-
     try {
-      await axios.post("http://localhost:8003/api/payments/pay", {
+      // 🔴 Sửa localhost thành PAYMENT_SERVICE_URL
+      await axios.post(`${PAYMENT_SERVICE_URL}/api/payments/pay`, {
         orderId: savedOrder._id,
         userId: userId,
         amount: totalAmount,
@@ -83,8 +93,9 @@ router.post("/", async (req, res) => {
       // 🔥 ROLLBACK STOCK
       for (let item of items) {
         try {
+          // 🔴 Sửa localhost thành PRODUCT_SERVICE_URL
           await axios.put(
-            `http://localhost:8001/api/products/${item.productId}/restore-stock`,
+            `${PRODUCT_SERVICE_URL}/api/products/${item.productId}/restore-stock`,
             {
               quantity: item.quantity,
             },
@@ -198,4 +209,5 @@ router.put("/:id/status", async (req, res) => {
     });
   }
 });
+
 module.exports = router;
