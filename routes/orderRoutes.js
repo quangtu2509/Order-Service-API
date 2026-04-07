@@ -6,9 +6,9 @@ const axios = require("axios");
 // 🔥 Khai báo URL lấy từ biến môi trường (Environment Variables)
 // Nếu chạy ở máy ảo (Render) nó sẽ lấy link trên mạng, nếu chạy ở máy tính bạn nó sẽ lấy localhost
 const PRODUCT_SERVICE_URL =
-  process.env.PRODUCT_SERVICE_URL || "http://localhost:8001";
+  process.env.PRODUCT_SERVICE_URL || "http://product-service:8001";
 const PAYMENT_SERVICE_URL =
-  process.env.PAYMENT_SERVICE_URL || "http://localhost:8003";
+  process.env.PAYMENT_SERVICE_URL || "http://payment-service:8003";
 
 // 1. POST /api/orders
 router.post("/", async (req, res) => {
